@@ -8,10 +8,14 @@
 import UIKit
 import MapKit
 
-class ViewController: UIViewController, CLLocationManagerDelegate {
+protocol HandleMapSearch: class {
+    func addCityMarker(coordinate: CLLocationCoordinate2D)
+}
+
+class ViewController: UIViewController, CLLocationManagerDelegate, HandleMapSearch {
+    
     
     @IBOutlet weak var mapView: MKMapView!
-    @IBOutlet weak var placeSearchText: UITextField!
     var locationMnager = CLLocationManager()
     var destination = [CLLocationCoordinate2D]()
     var userAddress = ""
@@ -23,7 +27,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     let userCurrentLocationTitle = "User Current Location"
     var userCurrentLocation: CLLocationCoordinate2D? = nil
     var distanceLables : [UILabel] = []
-    var points : [CGPoint] = []
+    
+    var resultSearchController: UISearchController!
+    
+    var matchingItems:[MKMapItem] = []
+    var selectedPin: MKPlacemark?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -40,14 +48,32 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         addAnnotationOnDoubleTap()
         
         //Add Long Press
-        let userLongPress = UILongPressGestureRecognizer(target: self, action: #selector(addAnnotationOnLongPress))
-        mapView.addGestureRecognizer(userLongPress)
-        
+   //     let userLongPress = UILongPressGestureRecognizer(target: self, action: #selector(addAnnotationOnLongPress))
+   //     mapView.addGestureRecognizer(userLongPress)
+    
+        let locationSearchTable = storyboard!.instantiateViewController(withIdentifier: "LocationSearchTableViewController") as! LocationSearchTableViewController
+        resultSearchController = UISearchController(searchResultsController: locationSearchTable)
+        resultSearchController.searchResultsUpdater = locationSearchTable
+        let searchBar = resultSearchController!.searchBar
+        searchBar.sizeToFit()
+        searchBar.placeholder = "Search for places"
+        navigationItem.titleView = resultSearchController?.searchBar
+        resultSearchController.hidesNavigationBarDuringPresentation = false
+        resultSearchController.dimsBackgroundDuringPresentation = true
+        definesPresentationContext = true
+        locationSearchTable.mapView = mapView
+        locationSearchTable.handleMapSearchDelegate = self
+    }
+    
+    func getDirections(){
+        guard let selectedPin = selectedPin else { return }
+        let mapItem = MKMapItem(placemark: selectedPin)
+        let launchOptions = [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving]
+        mapItem.openInMaps(launchOptions: launchOptions)
     }
     
     @IBAction func clearMap(){
         removeRroute()
-        points.removeAll()
         dropCount = 0
         citySelection = false
         destination.removeAll()
@@ -63,43 +89,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     @objc func addAnnotationOnLongPress(gestureRecognizer: UIGestureRecognizer) {
         let touchPoint = gestureRecognizer.location(in: mapView)
         let coordinate = mapView.convert(touchPoint, toCoordinateFrom: mapView)
-        
-        if (dropCount == 3){
-            var locationAvailable = false
-            for des in destination {
-                if  des == coordinate{
-                    locationAvailable = true
-                }
-            }
-            if !locationAvailable {
-                clearMap()
-                displayCityMarker(coordinate: coordinate, touchPoint: touchPoint)
-                
-            }else{
-                displayLocationErrorAlert()
-            }
-        }
-        if (dropCount < 3){
-            citySelection = true
-            // add annotation
-
-            
-            for des in destination {
-                if  des == coordinate{
-                    if let index = destination.firstIndex(of: des) {
-                        destination.remove(at: index)
-                    }
-                    removeAnnotation(coordinate: des)
-                    dropCount -= 1
-                    return
-                }
-            }
-            displayCityMarker(coordinate: coordinate, touchPoint: touchPoint)
-
-        }
-        else{
-            displayLocationErrorAlert()
-        }
+        addCityMarker(coordinate: coordinate)
     }
     
     //MARK: - Double Tap
@@ -113,7 +103,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         
         let touchPoint = sender.location(in: mapView)
         let coordinate = mapView.convert(touchPoint, toCoordinateFrom: mapView)
-        
+        addCityMarker(coordinate: coordinate)
+       
+    }
+    
+    func addCityMarker(coordinate : CLLocationCoordinate2D){
         if (dropCount == 3){
             var locationAvailable = false
             for des in destination {
@@ -123,7 +117,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
             }
             if !locationAvailable {
                 clearMap()
-                displayCityMarker(coordinate: coordinate, touchPoint: touchPoint)
+                displayCityMarker(coordinate: coordinate)
                 
             }else{
                 displayLocationErrorAlert()
@@ -140,14 +134,14 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                     return
                 }
             }
-            displayCityMarker(coordinate: coordinate, touchPoint: touchPoint)
+            displayCityMarker(coordinate: coordinate)
         }
         else{
             displayLocationErrorAlert()
         }
     }
     
-    func displayCityMarker(coordinate : CLLocationCoordinate2D,touchPoint : CGPoint ){
+    func displayCityMarker(coordinate : CLLocationCoordinate2D ){
         citySelection = true
         var subtitle = ""
         if let userLocation = userCurrentLocation {
@@ -156,7 +150,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
         }
         
         self.displayLocation(latitude: coordinate.latitude, longitude: coordinate.longitude, title: cityArray[dropCount], subtitle: subtitle)
-        points.append(CGPoint(x: touchPoint.x, y: touchPoint.y))
         destination.append(coordinate)
         destinationSelected = true
         dropCount += 1
@@ -176,10 +169,18 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
     }
     //MARK: - draw route between two places
     @IBAction func drawRoute() {
-        mapView.removeOverlays(mapView.overlays)
-        drawDestinationRoutes(sourceCoordinate: destination[0], destinationCoordinate: destination[1])
-        drawDestinationRoutes(sourceCoordinate: destination[1], destinationCoordinate: destination[2])
-        drawDestinationRoutes(sourceCoordinate: destination[2], destinationCoordinate: destination[0])
+        if destination.count == 3 {
+            mapView.removeOverlays(mapView.overlays)
+            drawDestinationRoutes(sourceCoordinate: destination[0], destinationCoordinate: destination[1])
+            drawDestinationRoutes(sourceCoordinate: destination[1], destinationCoordinate: destination[2])
+            drawDestinationRoutes(sourceCoordinate: destination[2], destinationCoordinate: destination[0])
+            
+        }else{
+            let alertController = UIAlertController(title: "Max Location Selection", message: "Please select 3 location to continue", preferredStyle: .alert)
+            let cancelAction = UIAlertAction(title: "OK", style: .cancel, handler: nil)
+            alertController.addAction(cancelAction)
+            present(alertController, animated: true, completion: nil)
+        }
     }
     
     func removeRroute(){
@@ -202,19 +203,21 @@ class ViewController: UIViewController, CLLocationManagerDelegate {
                          longitude: CLLocationDegrees,
                          title: String,
                          subtitle: String) {
-        let latDelta: CLLocationDegrees = 0.05
-        let lngDelta: CLLocationDegrees = 0.05
-        
-        let span = MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lngDelta)
-        let location = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
-        let region = MKCoordinateRegion(center: location, span: span)
-        mapView.setRegion(region, animated: true)
-        
-        let annotation = MKPointAnnotation()
-        annotation.title = title
-        annotation.subtitle = subtitle
-        annotation.coordinate = location
-        mapView.addAnnotation(annotation)
+        DispatchQueue.main.async {
+            let latDelta: CLLocationDegrees = 0.05
+            let lngDelta: CLLocationDegrees = 0.05
+            
+            let span = MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: lngDelta)
+            let location = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+            let region = MKCoordinateRegion(center: location, span: span)
+            self.mapView.setRegion(region, animated: true)
+            
+            let annotation = MKPointAnnotation()
+            annotation.title = title
+            annotation.subtitle = subtitle
+            annotation.coordinate = location
+            self.mapView.addAnnotation(annotation)
+        }
     }
     
     //MARK: - didupdatelocation method
@@ -423,17 +426,20 @@ extension CLLocationCoordinate2D: Equatable {
 extension ViewController {
     
     func addDistanceLable(){
-        let distance = calculatedistance(from: destination[0], to: destination[1])
+        let pointA = getpointFromCoordinate(coordinate: destination[0])
+        let pointB = getpointFromCoordinate(coordinate: destination[1])
+        let pointC = getpointFromCoordinate(coordinate: destination[2])
         
-        self.createDistanceLable(text:String(format: "%.2f", distance), from: points[0],to: points[1])
+        let distance = calculatedistance(from: destination[0], to: destination[1])
+        self.createDistanceLable(text:String(format: "%.2f", distance), from: pointA,to: pointB)
             
         let distance2 = calculatedistance(from: destination[1], to: destination[2])
         
-        self.createDistanceLable(text:String(format: "%.2f", distance2), from: points[1],to: points[2])
+        self.createDistanceLable(text:String(format: "%.2f", distance2), from: pointB,to: pointC)
         
         let distance3 = calculatedistance(from: destination[2], to: destination[0])
         
-        self.createDistanceLable(text:String(format: "%.2f", distance3), from: points[2],to: points[0])
+        self.createDistanceLable(text:String(format: "%.2f", distance3), from: pointC,to: pointB)
     }
     
     func createDistanceLable(text : String ,from : CGPoint, to : CGPoint){
@@ -450,9 +456,17 @@ extension ViewController {
     }
     
     private func getCenterPoints(from: CGPoint, to: CGPoint) -> CGPoint {
-        let dx = (from.x )
-        let dy = (from.y )
+        let dx = (from.x + to.x)/2
+        let dy = (from.y + from.y)/2
         
         return CGPoint(x: dx, y: dy)
     }
+    
+    func getpointFromCoordinate(coordinate : CLLocationCoordinate2D) -> CGPoint{
+        let point = mapView.convert(coordinate, toPointTo: mapView)
+        let pointInNewView = mapView.convert(point, from: mapView)
+        return pointInNewView
+    }
 }
+
+

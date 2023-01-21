@@ -14,6 +14,7 @@
 		2CE8ED9A297B4493000D14E5 /* A1_A2_iOS__Malsha_C0871063.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = 2CE8ED98297B4493000D14E5 /* A1_A2_iOS__Malsha_C0871063.xcdatamodeld */; };
 		2CE8ED9C297B4495000D14E5 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2CE8ED9B297B4495000D14E5 /* Assets.xcassets */; };
 		2CE8ED9F297B4495000D14E5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2CE8ED9D297B4495000D14E5 /* LaunchScreen.storyboard */; };
+		2CE8EDA8297B7754000D14E5 /* LocationSearchTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE8EDA6297B7754000D14E5 /* LocationSearchTableViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		2CE8ED9B297B4495000D14E5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		2CE8ED9E297B4495000D14E5 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		2CE8EDA0297B4495000D14E5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2CE8EDA6297B7754000D14E5 /* LocationSearchTableViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSearchTableViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 				2CE8ED9D297B4495000D14E5 /* LaunchScreen.storyboard */,
 				2CE8EDA0297B4495000D14E5 /* Info.plist */,
 				2CE8ED98297B4493000D14E5 /* A1_A2_iOS__Malsha_C0871063.xcdatamodeld */,
+				2CE8EDA6297B7754000D14E5 /* LocationSearchTableViewController.swift */,
 			);
 			path = "A1_A2_iOS_ Malsha_C0871063";
 			sourceTree = "<group>";
@@ -143,6 +146,7 @@
 			files = (
 				2CE8ED9A297B4493000D14E5 /* A1_A2_iOS__Malsha_C0871063.xcdatamodeld in Sources */,
 				2CE8ED94297B4493000D14E5 /* ViewController.swift in Sources */,
+				2CE8EDA8297B7754000D14E5 /* LocationSearchTableViewController.swift in Sources */,
 				2CE8ED90297B4493000D14E5 /* AppDelegate.swift in Sources */,
 				2CE8ED92297B4493000D14E5 /* SceneDelegate.swift in Sources */,
 			);
