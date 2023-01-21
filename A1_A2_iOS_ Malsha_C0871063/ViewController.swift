@@ -31,7 +31,6 @@ class ViewController: UIViewController, CLLocationManagerDelegate, HandleMapSear
     var resultSearchController: UISearchController!
     
     var matchingItems:[MKMapItem] = []
-    var selectedPin: MKPlacemark?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -62,14 +61,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, HandleMapSear
         resultSearchController.dimsBackgroundDuringPresentation = true
         definesPresentationContext = true
         locationSearchTable.mapView = mapView
-        locationSearchTable.handleMapSearchDelegate = self
-    }
-    
-    func getDirections(){
-        guard let selectedPin = selectedPin else { return }
-        let mapItem = MKMapItem(placemark: selectedPin)
-        let launchOptions = [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving]
-        mapItem.openInMaps(launchOptions: launchOptions)
+        locationSearchTable.handleLocationSearchDelegate = self
     }
     
     @IBAction func clearMap(){
